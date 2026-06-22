@@ -31,6 +31,7 @@ class MiniVectorDBRoutes:
             metadata=request.metadata,
             text=request.text,
             record_id=request.id,
+            wait=request.wait,
         )
         return {"ok": True, "record": record.to_dict()}
 
@@ -44,6 +45,7 @@ class MiniVectorDBRoutes:
             filters=request.filters,
             metric=request.metric,
             use_hybrid=request.use_hybrid,
+            prefer_compression=request.prefer_compression,
         )
         return {"ok": True, "results": results}
 
@@ -51,4 +53,3 @@ class MiniVectorDBRoutes:
         request = DeleteRequest(**payload)
         deleted = self.db.delete(request.collection, request.id)
         return {"ok": deleted}
-

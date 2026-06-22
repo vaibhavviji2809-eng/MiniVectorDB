@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass, field
 from typing import Any, List
 
@@ -22,9 +23,14 @@ class ReplicaSet:
     def search(self, collection: str, **payload: Any):
         return self.primary.search(collection, **payload)
 
+    async def search_async(self, collection: str, **payload: Any):
+        return await asyncio.to_thread(self.search, collection, **payload)
+
     def delete(self, collection: str, record_id: str) -> bool:
         deleted = self.primary.delete(collection, record_id)
         for replica in self.replicas:
             replica.delete(collection, record_id)
         return deleted
 
+    async def insert_async(self, collection: str, **payload: Any):
+        return await asyncio.to_thread(self.insert, collection, **payload)

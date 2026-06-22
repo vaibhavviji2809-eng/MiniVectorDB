@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import hashlib
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -38,6 +37,7 @@ class PersistenceManager:
 
     def load(self) -> MiniVectorDB:
         from ..core import Collection, MiniVectorDB
+        from .metadata import MetadataStore
 
         path = self.directory / "vectors.bin"
         if not path.exists():
@@ -53,9 +53,7 @@ class PersistenceManager:
         for name, collection_payload in payload.items():
             collection = Collection.from_dict(collection_payload)
             if name in metadata_payload:
-                collection.metadata_store = Collection.from_dict(
-                    {**collection_payload, "metadata_store": metadata_payload[name]}
-                ).metadata_store
+                collection.metadata_store = MetadataStore.from_dict(metadata_payload[name])
             collections[name] = collection
         db.collections = collections
         return db

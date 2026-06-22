@@ -21,6 +21,7 @@ class InsertRequest:
     metadata: Dict[str, Any] = field(default_factory=dict)
     text: Optional[str] = None
     id: Optional[str] = None
+    wait: bool = True
 
 
 @dataclass
@@ -32,6 +33,7 @@ class SearchRequest:
     filters: Dict[str, Any] = field(default_factory=dict)
     metric: str = "cosine"
     use_hybrid: bool = False
+    prefer_compression: bool = False
 
 
 @dataclass
@@ -42,4 +44,3 @@ class DeleteRequest:
 
 def to_dict(payload: Any) -> Dict[str, Any]:
     return asdict(payload)
-

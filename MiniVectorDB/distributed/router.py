@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 from dataclasses import dataclass, field
 from typing import Any, Dict, Iterable, List
@@ -36,6 +37,24 @@ class Router:
         results = []
         for shard in targets:
             results.extend(shard.search(collection, **payload))
-        results.sort(key=lambda item: item.get("score", 0.0), reverse=True)
-        top_k = payload.get("top_k", 5)
-        return results[:top_k]
+        return self._merge_results(results, payload.get("top_k", 5))
+
+    async def search_async(self, collection: str, key: str | None = None, **payload: Any):
+        targets = self._target_shards(key)
+        if not targets:
+            return []
+        shard_results = await asyncio.gather(
+            *[shard.search_async(collection, **payload) for shard in targets]
+        )
+        merged = [item for batch in shard_results for item in batch]
+        return self._merge_results(merged, payload.get("top_k", 5))
+
+    def _merge_results(self, results: List[Dict[str, Any]], top_k: int) -> List[Dict[str, Any]]:
+        seen: Dict[str, Dict[str, Any]] = {}
+        for item in results:
+            record_id = str(item.get("id"))
+            current = seen.get(record_id)
+            if current is None or item.get("score", 0.0) > current.get("score", 0.0):
+                seen[record_id] = item
+        merged = sorted(seen.values(), key=lambda item: item.get("score", 0.0), reverse=True)
+        return merged[:top_k]
